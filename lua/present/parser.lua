@@ -39,30 +39,35 @@ parser.query_slides = function(bufnr)
   for id, node, _ in slide_query:iter_captures(root, bufnr, 0, -1) do
     local name = slide_query.captures[id]
     local text = vim.treesitter.get_node_text(node, 0)
-    local type = node.type(node)
-
-    -- Every time we hit a header, insert the slide so we can start a new one
-    if name == "header" and current_slide.title ~= "" then
-      table.insert(slides.slides, current_slide)
-    end
 
     if name == "header" then
+      -- When we hit a header, we can insert the state from the previous slide
+      if text ~= current_slide.title and current_slide.title ~= "" then
+        table.insert(slides.slides, current_slide)
+        -- Reset slide state after insert
+        current_slide = {
+          title = "",
+          body = {},
+          blocks = {},
+        }
+      end
+
       current_slide.title = text
     elseif name == "content" then
-      table.insert(current_slide.body, text)
+      vim.list_extend(current_slide.body, vim.split(text, "\n"))
     elseif name == "language" then
       code_block.language = text
     elseif name == "code" then
       code_block.body = text
       table.insert(current_slide.blocks, code_block)
-      -- Code blocks are always a single "language" capture, followed by a single "code" capture, so we can safely
-      -- insert the code block here
+      -- Reset code block state after insert
+      code_block = {
+        language = "",
+        body = {},
+      }
     end
   end
-
-  -- Insert last slide since there's not other heading to trigger the insert
-  table.insert(slides, current_slide)
-  vim.print(slides.slides)
+  table.insert(slides.slides, current_slide)
   return slides
 end
 
