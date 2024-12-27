@@ -45,8 +45,7 @@ M.start_presentation = function(opts)
   opts = opts or {}
   opts.bufnr = opts.bufnr or 0
 
-  local lines = vim.api.nvim_buf_get_lines(opts.bufnr, 0, -1, false)
-  state.parsed = parser.parse_slides(lines)
+  state.parsed = parser.query_slides(opts.bufnr)
   state.current_slide = 1
   state.title = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(opts.bufnr), ":t")
 
