@@ -1,15 +1,22 @@
 local parser = {}
 
 -- Matches on every section in a markdown doc, returning the header and content of the section
-local heading_query = [[
+local slide_query = vim.treesitter.query.parse(
+  "markdown",
+  [[
 (section 
   (atx_heading
     (atx_h1_marker)
     heading_content: (_) @header
     )
   (_)+ @content)+
+
+(fenced_code_block
+  (info_string
+    (language) @language)
+  (code_fence_content) @code)
 ]]
-local query = vim.treesitter.query.parse("markdown", heading_query)
+)
 
 ---@param bufnr integer|nil
 ---@return present.Slides
@@ -20,23 +27,42 @@ parser.query_slides = function(bufnr)
   local root = tree[1]:root()
 
   local slides = { slides = {} }
-  for id, node, _ in query:iter_captures(root, bufnr, 0, -1) do
-    local current_slide = {
-      title = "",
-      body = {},
-      blocks = {},
-    }
-
-    local name = query.captures[id]
+  local current_slide = {
+    title = "",
+    body = {},
+    blocks = {},
+  }
+  local code_block = {
+    language = "",
+    body = {},
+  }
+  for id, node, _ in slide_query:iter_captures(root, bufnr, 0, -1) do
+    local name = slide_query.captures[id]
     local text = vim.treesitter.get_node_text(node, 0)
+    local type = node.type(node)
+
+    -- Every time we hit a header, insert the slide so we can start a new one
+    if name == "header" and current_slide.title ~= "" then
+      table.insert(slides.slides, current_slide)
+    end
+
     if name == "header" then
       current_slide.title = text
     elseif name == "content" then
       table.insert(current_slide.body, text)
-      -- Need an extra thing here for code blocks
+    elseif name == "language" then
+      code_block.language = text
+    elseif name == "code" then
+      code_block.body = text
+      table.insert(current_slide.blocks, code_block)
+      -- Code blocks are always a single "language" capture, followed by a single "code" capture, so we can safely
+      -- insert the code block here
     end
   end
 
+  -- Insert last slide since there's not other heading to trigger the insert
+  table.insert(slides, current_slide)
+  vim.print(slides.slides)
   return slides
 end
 
