@@ -26,8 +26,9 @@ A Neovim plugin for rendering awesome presentations using Markdown!.
 
 You can execute a code block on the current slide (defaults to `X` key), and the output will get displayed in a floating window. Currently supported executors are:
 
-- `lua`
-- `python`
+- `Lua`
+- `Python`
+- `Javascript`
 
 You can also configure a custom executor for any code block by defining an `executor` for the language using `opts.executors`.
 
