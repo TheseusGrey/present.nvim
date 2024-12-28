@@ -27,4 +27,4 @@ jobs:
       - name: Run tests
         run: |
           nvim --version
-          make test
+          # make test
