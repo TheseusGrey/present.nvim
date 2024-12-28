@@ -5,6 +5,8 @@ A Neovim plugin for rendering awesome presentations using Markdown!.
 ---
 - [Installation](#Installation)
 - [Feature](#Features)
+- [Usage](#usage)
+- [Credits](#credits)
 
 ---
 
