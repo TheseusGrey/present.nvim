@@ -1,6 +1,7 @@
 local styles = {}
 
-styles.create_window_configurations = function()
+styles.create_window_configurations = function(slide_styles)
+  slide_styles = slide_styles or {}
   local width = vim.o.columns
   local height = vim.o.lines
 
@@ -17,6 +18,18 @@ styles.create_window_configurations = function()
       col = 0,
       row = 0,
       zindex = 1,
+    },
+    content = {
+      relative = "editor",
+      width = width - 2 * slide_styles.border,
+      height = height - 2 * slide_styles.border,
+      style = "minimal",
+      border = "none",
+      col = slide_styles.border,
+      row = slide_styles.border / 2 - 1,
+      footer = "",
+      footer_pos = "right",
+      zindex = 2,
     },
     header = {
       relative = "editor",
