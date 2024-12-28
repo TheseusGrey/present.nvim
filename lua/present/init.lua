@@ -5,6 +5,8 @@ local parser = require("present.parser")
 local styles = require("present.styles")
 local controls = require("present.controls")
 
+local namespace = vim.api.nvim_create_namespace("present")
+
 local options = {
   styles = {
     border = 8,
@@ -76,9 +78,14 @@ M.start_presentation = function(opts)
     background_config.footer = footer
     slide_config.title = slide.title
 
+    -- Set slide content
     vim.api.nvim_buf_set_lines(presentation.floats.body.buf, 0, -1, false, content)
     vim.api.nvim_win_set_config(presentation.floats.background.win, background_config)
     vim.api.nvim_win_set_config(presentation.floats.body.win, slide_config)
+
+    -- Set highlights
+    vim.api.nvim_win_set_hl_ns(presentation.floats.background.win, namespace)
+    vim.api.nvim_set_hl(0, "FloatFooter", { fg = "orange" })
   end
 
   controls.set_slide_controls(presentation, set_slide_content, options)
