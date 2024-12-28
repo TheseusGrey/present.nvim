@@ -1,11 +1,9 @@
 local M = {}
-local s = require("present.slides")
+local renderer = require("present.renderer")
 local executors = require("present.executors")
 local parser = require("present.parser")
 local styles = require("present.styles")
 local controls = require("present.controls")
-
-local namespace = vim.api.nvim_create_namespace("present")
 
 local options = {
   styles = {
@@ -55,8 +53,8 @@ M.start_presentation = function(opts)
   presentation.title = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(opts.bufnr), ":t")
 
   local windows = styles.create_window_configurations(options.styles)
-  presentation.floats.background = s.create_floating_window(windows.background)
-  presentation.floats.body = s.create_floating_window(windows.content, true)
+  presentation.floats.background = renderer.create_floating_window(windows.background)
+  presentation.floats.body = renderer.create_floating_window(windows.content, true)
 
   foreach_float(function(_, float)
     vim.bo[float.buf].filetype = "markdown"
@@ -85,7 +83,7 @@ M.start_presentation = function(opts)
     vim.api.nvim_win_set_config(presentation.floats.body.win, slide_config)
 
     -- Set highlights
-    vim.api.nvim_win_set_hl_ns(presentation.floats.background.win, namespace)
+    vim.api.nvim_win_set_hl_ns(presentation.floats.background.win, renderer.namespace)
     vim.api.nvim_set_hl(0, "FloatFooter", { fg = "orange" })
   end
 

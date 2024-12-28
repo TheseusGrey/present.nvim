@@ -1,8 +1,47 @@
 local parser = {}
 
--- Matches on every section in a markdown doc, returning the header and content of the section
--- Need to be able to extend this to deal with the other kinds of headers, and the fact that
--- sub headings create sub sections as child nodes
+local ts_available, treesitter_parsers = pcall(require, "nvim-treesitter.parsers")
+
+--- Checks if a parser is available or not
+---@param parser_name string
+---@return boolean
+local function parser_installed(parser_name)
+  return (ts_available and treesitter_parsers.has_parser(parser_name))
+    or pcall(vim.treesitter.query.get, parser_name, "highlights")
+end
+
+local queries = vim.treesitter.query.parse(
+  "markdown",
+  [[
+		((setext_heading) @setext_heading)
+
+		(atx_heading [
+			(atx_h1_marker)
+			(atx_h2_marker)
+		] @heading)
+
+    (atx_heading [
+			(atx_h3_marker)
+			(atx_h4_marker)
+			(atx_h5_marker)
+			(atx_h6_marker)
+    ] @subheading)
+
+		((fenced_code_block) @code)
+
+		((block_quote) @block_quote)
+
+		((thematic_break) @horizontal_rule)
+
+		((pipe_table) @table)
+
+		((task_list_marker_unchecked) @checkbox_off)
+		((task_list_marker_checked) @checkbox_on)
+
+		((list_item) @list_item)
+	]]
+)
+
 local slide_query = vim.treesitter.query.parse(
   "markdown",
   [[
@@ -19,6 +58,69 @@ local slide_query = vim.treesitter.query.parse(
   (code_fence_content) @code)
 ]]
 )
+
+---@param bufnr integer
+---@return present.Slides|nil
+parser.parse = function(bufnr)
+  if not parser_installed("markdown") then
+    vim.notify("present.nvim: No Markdown parser found, cannot create slides!", vim.log.levels.ERROR)
+    return
+  end
+
+  local parsed_content = { slides = {} }
+
+  local query_slide = function(buf, tree_parser)
+    local captures = {}
+
+    local root = tree_parser:parse()[1]:root()
+    for id, node, _ in queries:iter_captures(root, buf, 0, -1) do
+      local capture_name = queries.captures[id]
+      local capture_text = vim.treesitter.get_node_text(node, buf)
+      local row_start, col_start, row_end, col_end = node:range()
+
+      -- TODO: might want to capture info more relevant to individual nodes?
+      table.insert(captures, {
+        id = id,
+        node = node,
+        name = capture_name,
+        text = capture_text,
+        row_start = row_start,
+        row_end = row_end,
+        col_start = col_start,
+        col_end = col_end,
+      })
+    end
+
+    return captures
+  end
+
+  -- temp buffer for processing slides
+  local slide_buf = vim.api.nvim_create_buf(false, true) -- temp buffer for TS parsing
+  vim.bo[slide_buf].filetype = "markdown"
+
+  local separator = "^#{1,2} " -- Every h1/h2 is a new slide
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local tree_parser = vim.treesitter.get_parser(slide_buf)
+
+  local start = 1
+  for index, line in ipairs(vim.list_slice(lines, 2, #lines)) do -- Skip first line when iterating
+    if line:find(separator) then
+      -- Populate the temp buffer
+      vim.api.nvim_buf_set_lines(slide_buf, 0, -1, false, vim.list_slice(lines, start, index - 1))
+      start = index
+
+      -- Query the temp buf to parse content
+      local captures = query_slide(slide_buf, tree_parser)
+      table.insert(parsed_content.slides, {
+        content = vim.api.nvim_buf_get_lines(slide_buf, 0, -1, false),
+        captures = captures,
+      })
+    end
+  end
+
+  vim.api.nvim_buf_delete(slide_buf, { force = true }) -- cleanup temp buffer
+  return parsed_content
+end
 
 ---@param bufnr integer|nil
 ---@return present.Slides
