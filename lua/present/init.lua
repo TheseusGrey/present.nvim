@@ -75,7 +75,6 @@ M.start_presentation = function(opts)
     background_config.footer = footer
     slide_config.title = slide.title
 
-    print(background_config.footer)
     vim.api.nvim_buf_set_lines(presentation.floats.body.buf, 0, -1, false, content)
     vim.api.nvim_win_set_config(presentation.floats.background.win, background_config)
     vim.api.nvim_win_set_config(presentation.floats.body.win, slide_config)
