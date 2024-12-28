@@ -2,6 +2,16 @@
 
 Hey, this is a plugin for presenting markdown files!!
 
+## Installation
+
+### [lazy.nvim](https://github.com/folke/lazy.nvim)
+
+```lua
+{
+  'tjdevries/present.nvim',
+}
+```
+
 # Features: Neovim Lua Execution
 
 Can execute code in lua blocks, when you have them in a slide
