@@ -16,6 +16,7 @@ local options = {
     lua = executors.lua,
     javascript = executors.create_system_executor("node"),
     python = executors.create_system_executor("python"),
+    rust = executors.rust,
   },
 }
 
