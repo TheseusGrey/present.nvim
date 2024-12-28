@@ -73,7 +73,7 @@ M.start_presentation = function(opts)
     vim.list_extend(content, slide.body)
 
     local footer =
-      string.format("  %d / %d | %s", presentation.current_slide, #presentation.parsed.slides, presentation.title)
+      string.format("%d / %d | %s", presentation.current_slide, #presentation.parsed.slides, presentation.title)
 
     background_config.footer = footer
     slide_config.title = slide.title
