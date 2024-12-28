@@ -13,10 +13,13 @@ styles.create_window_configurations = function(slide_styles)
     background = {
       relative = "editor",
       width = width,
-      height = height,
+      height = height - 2,
       style = "minimal",
+      border = "solid",
       col = 0,
       row = 0,
+      footer = "test",
+      footer_pos = "right",
       zindex = 1,
     },
     content = {
@@ -27,8 +30,6 @@ styles.create_window_configurations = function(slide_styles)
       border = "none",
       col = slide_styles.border,
       row = slide_styles.border / 2 - 1,
-      footer = "",
-      footer_pos = "right",
       zindex = 2,
     },
     header = {

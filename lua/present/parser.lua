@@ -1,10 +1,12 @@
 local parser = {}
 
 -- Matches on every section in a markdown doc, returning the header and content of the section
+-- Need to be able to extend this to deal with the other kinds of headers, and the fact that
+-- sub headings create sub sections as child nodes
 local slide_query = vim.treesitter.query.parse(
   "markdown",
   [[
-(section 
+(section
   (atx_heading
     (atx_h1_marker)
     heading_content: (_) @header
