@@ -1,6 +1,12 @@
 # `present.nvim`
 
-Hey, this is a plugin for presenting markdown files!!
+A Neovim plugin for rendering awesome presentations using Markdown!.
+
+---
+- [Installation](#Installation)
+- [Feature](#Features)
+
+---
 
 ## Installation
 
@@ -12,34 +18,34 @@ Hey, this is a plugin for presenting markdown files!!
 }
 ```
 
-# Features: Neovim Lua Execution
+# Features
 
-Can execute code in lua blocks, when you have them in a slide
+## Code block execution
+
+You can execute a code block on the current slide (defaults to `X` key), and the output will get displayed in a floating window. Currently supported executors are:
+
+- `lua`
+- `python`
+
+You can also configure a custom executor for any code block by defining an `executor` for the language using `opts.executors`.
+
+### Example
+
+Here is a lua code block you can use to test out the code executor:
 
 ```lua
-print("Hello world", 37, true)
+print("Hello presentation!", 37, true)
 ```
-
-# Features: Other Langs
-
-Can execute code in Language blocks, when you have them in a slide.
-
-You may need to configure this with `opts.executors`, only have Lua, Python, Javascript, and Rust by default.
-
-```python
-print("yaayayayaya python")
-```
-
 # Usage
+
+You can start a presentation from any markdown buffer using `:PresentStart`, or via lua using:
 
 ```lua
 require("present").start_presentation {}
 ```
 
-Use `n`, and `p` to navigate markdow slides.
-
-Or use `:PresentStart` Command
+Moving between slides defaults to `n` and `p` for **n**ext and **p**revious slides respectively.
 
 # Credits
 
-teej_dv
+- Original plugin author: [teej_dv](https://github.com/tjdevries)
