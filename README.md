@@ -29,6 +29,7 @@ You can execute a code block on the current slide (defaults to `X` key), and the
 - `Lua`
 - `Python`
 - `Javascript`
+- `Rust`
 
 You can also configure a custom executor for any code block by defining an `executor` for the language using `opts.executors`.
 

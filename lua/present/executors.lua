@@ -1,5 +1,20 @@
 local executors = {}
 
+--- Default executor for Rust code
+---@param block present.Block
+executors.rust = function(block)
+  local tempfile = vim.fn.tempname() .. ".rs"
+  local outputfile = tempfile:sub(1, -4)
+  vim.fn.writefile(vim.split(block.body, "\n"), tempfile)
+  local result = vim.system({ "rustc", tempfile, "-o", outputfile }, { text = true }):wait()
+  if result.code ~= 0 then
+    local output = vim.split(result.stderr, "\n")
+    return output
+  end
+  result = vim.system({ outputfile }, { text = true }):wait()
+  return vim.split(result.stdout, "\n")
+end
+
 --- Default executor for lua code
 ---@param block present.Block
 executors.lua = function(block)
