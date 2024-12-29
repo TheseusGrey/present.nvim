@@ -25,23 +25,43 @@ M.setup = function(opts)
   options = opts
 end
 
+---@type present.Presentation
 local presentation = {
   parsed = {},
   current_slide = 1,
   slide_buf = {},
-  floats = {},
+  windows = {},
+  window_confs = {},
+  content = {},
+  title = "",
 }
 
 local foreach_float = function(cb)
-  for name, float in pairs(presentation.floats) do
+  for name, float in pairs(presentation.windows) do
     cb(name, float)
   end
 end
 
-local present_keymap = function(mode, key, callback)
-  vim.keymap.set(mode, key, callback, {
-    buffer = presentation.floats.body.buf,
-  })
+M.test = function(opts)
+  opts = opts or {}
+  opts.bufnr = opts.bufnr or 0
+
+  local parsed = parser.parse(opts.bufnr)
+  if parsed == nil then
+    vim.notify("present.nvim: unable to parse buffer, might not be a markdown file?", vim.log.levels.ERROR)
+    return
+  end
+  presentation.content = parsed
+  presentation.current_slide = 1
+  presentation.title = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(opts.bufnr), ":t")
+
+  presentation.window_confs = styles.create_window_configurations(options.styles)
+  presentation.windows.background = renderer.create_floating_window(presentation.window_confs.background)
+  presentation.windows.body = renderer.create_floating_window(presentation.window_confs.content, true)
+  vim.bo[presentation.windows.body.buf].filetype = "markdown"
+
+  controls.set_slide_controls(presentation, renderer.render_slide, options)
+  -- renderer.render_slide(presentation.content[presentation.current_slide])
 end
 
 M.start_presentation = function(opts)
@@ -53,8 +73,8 @@ M.start_presentation = function(opts)
   presentation.title = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(opts.bufnr), ":t")
 
   local windows = styles.create_window_configurations(options.styles)
-  presentation.floats.background = renderer.create_floating_window(windows.background)
-  presentation.floats.body = renderer.create_floating_window(windows.content, true)
+  presentation.windows.background = renderer.create_floating_window(windows.background)
+  presentation.windows.body = renderer.create_floating_window(windows.content, true)
 
   foreach_float(function(_, float)
     vim.bo[float.buf].filetype = "markdown"
@@ -78,12 +98,12 @@ M.start_presentation = function(opts)
     slide_config.title = slide.title
 
     -- Set slide content
-    vim.api.nvim_buf_set_lines(presentation.floats.body.buf, 0, -1, false, content)
-    vim.api.nvim_win_set_config(presentation.floats.background.win, background_config)
-    vim.api.nvim_win_set_config(presentation.floats.body.win, slide_config)
+    vim.api.nvim_buf_set_lines(presentation.windows.body.buf, 0, -1, false, content)
+    vim.api.nvim_win_set_config(presentation.windows.background.win, background_config)
+    vim.api.nvim_win_set_config(presentation.windows.body.win, slide_config)
 
     -- Set highlights
-    vim.api.nvim_win_set_hl_ns(presentation.floats.background.win, renderer.namespace)
+    vim.api.nvim_win_set_hl_ns(presentation.windows.background.win, renderer.namespace)
     vim.api.nvim_set_hl(0, "FloatFooter", { fg = "orange" })
   end
 

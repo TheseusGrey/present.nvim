@@ -1,12 +1,20 @@
-
----@class present.Slides
----@field slides present.Slide[]: The slides of the file
+---@class present.Presentation
+---@field title string: title of the presentation, defaults to buffer name
+---@field current_slide integer: current slide of the presentation
+---@field windows table: table containing the `win` and `buf` of the `background` and `body` of the presentation
+---@field window_confs table<string, vim.api.keyset.win_config>: table with the corresponding configs for the presentation windows
+---@field content present.Slide[]: content parsed from the markdown file used for the presentation
 
 ---@class present.Slide
----@field title string: The title of the slide
----@field body string[]: The body of slide
----@field blocks present.Block[]: A codeblock inside of a slide
+---@field content string[]: Markdown text that makes up the slide
+---@field captures present.SlideCapture[]: Capture info on slide content
 
----@class present.Block
----@field language string: The language of the codeblock
----@field body string: The body of the codeblock
+---@class present.SlideCapture
+---@field id integer: id of the capture
+---@field node TSNode: node from the capture if needed
+---@field name string: name of the node
+---@field text string: text of the node
+---@field row_start integer
+---@field row_end integer
+---@field col_start integer
+---@field col_end integer
