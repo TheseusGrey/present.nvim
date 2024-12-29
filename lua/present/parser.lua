@@ -1,6 +1,7 @@
 local parser = {}
 
 local ts_available, treesitter_parsers = pcall(require, "nvim-treesitter.parsers")
+local logger = require("present.logger")
 
 --- Checks if a parser is available or not
 ---@param parser_name string
@@ -63,7 +64,7 @@ local slide_query = vim.treesitter.query.parse(
 ---@return present.Slide[]|nil
 parser.parse = function(bufnr)
   if not parser_installed("markdown") then
-    vim.notify("present.nvim: No Markdown parser found, cannot create slides!", vim.log.levels.ERROR)
+    logger.error("present.nvim: No Markdown parser found, cannot create slides!")
     return
   end
 

@@ -4,6 +4,7 @@ local executors = require("present.executors")
 local parser = require("present.parser")
 local styles = require("present.styles")
 local controls = require("present.controls")
+local logger = require("present.logger")
 
 local options = {
   styles = {
@@ -48,7 +49,7 @@ M.test = function(opts)
 
   local parsed = parser.parse(opts.bufnr)
   if parsed == nil then
-    vim.notify("present.nvim: unable to parse buffer, might not be a markdown file?", vim.log.levels.ERROR)
+    logger.warn("present.nvim: unable to parse buffer, might not be a markdown file?")
     return
   end
   presentation.content = parsed
