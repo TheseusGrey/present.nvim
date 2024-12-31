@@ -11,6 +11,7 @@
 
 ---@class present.SlideCapture
 ---@field id integer: id of the capture
+---@field slide integer: clide the capture is located on
 ---@field node TSNode: node from the capture if needed
 ---@field name string: name of the node
 ---@field text string: text of the node
@@ -18,3 +19,13 @@
 ---@field row_end integer
 ---@field col_start integer
 ---@field col_end integer
+
+---@class present.Options
+---@field stlyes present.options.styles
+---@field executors present.options.executors
+
+---@class present.options.styles
+---@field border number?
+---@field executor_window vim.api.keyset.win_config?
+
+---@class present.options.executors
