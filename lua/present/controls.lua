@@ -1,5 +1,7 @@
 local controls = {}
 
+local logger = require("present.logger")
+
 local present_keymap = function(mode, key, callback, buf)
   vim.keymap.set(mode, key, callback, {
     buffer = buf,
@@ -18,13 +20,17 @@ end
 ---@param render_slide function
 ---@param options table
 controls.set_slide_controls = function(presentation, render_slide, options)
+  local last_run_block = 0
+
   present_keymap("n", "n", function()
     presentation.current_slide = math.min(presentation.current_slide + 1, #presentation.content)
+    last_run_block = 0
     render_slide(presentation)
   end, presentation.windows.body.buf)
 
   present_keymap("n", "p", function()
     presentation.current_slide = math.max(presentation.current_slide - 1, 1)
+    last_run_block = 0
     render_slide(presentation)
   end, presentation.windows.body.buf)
 
@@ -32,51 +38,53 @@ controls.set_slide_controls = function(presentation, render_slide, options)
     vim.api.nvim_win_close(presentation.windows.body.win, true)
   end, presentation.windows.body.buf)
 
-  -- TODO: swap this to cycle through the found fenced_code_blocks inside the slide
-  -- present_keymap("n", "X", function()
-  --   local slide = presentation.content.slides[presentation.current_slide]
-  --   -- TODO: Make a way for people to execute this for other languages
-  --   local block = slide.blocks[1]
-  --   if not block then
-  --     print("No blocks on this page")
-  --     return
-  --   end
-  --
-  --   local executor = options.executors[block.language]
-  --   if not executor then
-  --     print("No valid executor for this language")
-  --     return
-  --   end
-  --
-  --   -- Table to capture print messages
-  --   local output = { "# Code", "", "```" .. block.language }
-  --   vim.list_extend(output, vim.split(block.body, "\n"))
-  --   table.insert(output, "```")
-  --
-  --   table.insert(output, "")
-  --   table.insert(output, "# Output")
-  --   table.insert(output, "")
-  --   table.insert(output, "```")
-  --   vim.list_extend(output, executor(block))
-  --   table.insert(output, "```")
-  --
-  --   local buf = vim.api.nvim_create_buf(false, true) -- No file, scratch buffer
-  --   local temp_width = math.floor(vim.o.columns * 0.8)
-  --   local temp_height = math.floor(vim.o.lines * 0.8)
-  --   vim.api.nvim_open_win(buf, true, {
-  --     relative = "editor",
-  --     style = "minimal",
-  --     noautocmd = true,
-  --     width = temp_width,
-  --     height = temp_height,
-  --     row = math.floor((vim.o.lines - temp_height) / 2),
-  --     col = math.floor((vim.o.columns - temp_width) / 2),
-  --     border = "rounded",
-  --   })
-  --
-  --   vim.bo[buf].filetype = "markdown"
-  --   vim.api.nvim_buf_set_lines(buf, 0, -1, false, output)
-  -- end, presentation.windows.body.buf)
+  present_keymap("n", "X", function()
+    local slide = presentation.content[presentation.current_slide]
+    local code_blocks = slide.code_blocks
+
+    if #code_blocks == 0 then
+      logger.info("present.nvim: No code blocks on current slide")
+      return
+    end
+
+    local next_block = math.min(last_run_block, #code_blocks)
+    local block = code_blocks[next_block]
+    local executor = options.executors[block.language]
+    if not executor then
+      logger.error("present.nvim: no executor for block starting on line: " .. block.row_start)
+      return
+    end
+
+    -- Table to capture print messages
+    local output = { "# Code", "", "```" .. block.language }
+    vim.list_extend(output, vim.split(block.code, "\n"))
+    table.insert(output, "```")
+
+    table.insert(output, "")
+    table.insert(output, "# Output")
+    table.insert(output, "")
+    table.insert(output, "```")
+    vim.list_extend(output, executor(block))
+    table.insert(output, "```")
+
+    local buf = vim.api.nvim_create_buf(false, true) -- No file, scratch buffer
+    local temp_width = math.floor(vim.o.columns * 0.8)
+    local temp_height = math.floor(vim.o.lines * 0.8)
+    vim.api.nvim_open_win(buf, true, {
+      relative = "editor",
+      style = "minimal",
+      noautocmd = true,
+      width = temp_width,
+      height = temp_height,
+      row = math.floor((vim.o.lines - temp_height) / 2),
+      col = math.floor((vim.o.columns - temp_width) / 2),
+      border = "rounded",
+    })
+
+    vim.bo[buf].filetype = "markdown"
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, output)
+    last_run_block = math.fmod(last_run_block, #code_blocks)
+  end, presentation.windows.body.buf)
 
   local restore = {
     cmdheight = {

@@ -57,6 +57,7 @@ parser.parse = function(bufnr)
   local current_slide = {
     content = {},
     captures = {},
+    code_blocks = {},
   }
 
   local current_row_header = 0
@@ -76,6 +77,7 @@ parser.parse = function(bufnr)
       current_slide = {
         content = {},
         captures = {},
+        code_blocks = {},
       }
     end
 
@@ -83,6 +85,19 @@ parser.parse = function(bufnr)
     if capture_name == "heading" or capture_name == "subheading" then
       ---@diagnostic disable-next-line: param-type-mismatch
       capture_text = vim.treesitter.get_node_text(node:parent(), bufnr)
+    end
+
+    if capture_name == "code" then
+      local code = vim.api.nvim_buf_get_lines(bufnr, row_start + 1, row_end - 1, false)
+      ---@type present.CodeBlock
+      table.insert(current_slide.code_blocks, {
+        language = language,
+        code = code,
+        row_start = row_start - last_slide_row_end,
+        row_end = row_end - last_slide_row_end,
+        col_start = col_start,
+        col_end = col_end,
+      })
     end
 
     table.insert(current_slide.captures, {
