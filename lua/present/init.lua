@@ -62,7 +62,7 @@ M.test = function(opts)
   vim.bo[presentation.windows.body.buf].filetype = "markdown"
 
   controls.set_slide_controls(presentation, renderer.render_slide, options)
-  -- renderer.render_slide(presentation.content[presentation.current_slide])
+  renderer.render_slide(presentation)
 end
 
 M.start_presentation = function(opts)

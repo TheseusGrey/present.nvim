@@ -59,6 +59,7 @@ parser.parse = function(bufnr)
     captures = {},
   }
 
+  local current_row_header = 0
   local tree_parser = vim.treesitter.get_parser(bufnr)
   local root = tree_parser:parse()[1]:root()
   for id, node, _ in queries:iter_captures(root, bufnr, 0, -1) do
@@ -67,6 +68,8 @@ parser.parse = function(bufnr)
     local row_start, col_start, row_end, col_end = node:range()
 
     if capture_name == "heading" and row_start ~= 0 then
+      current_slide.content = vim.api.nvim_buf_get_lines(bufnr, current_row_header, row_start, false)
+      current_row_header = row_start
       table.insert(parsed_content, current_slide)
       current_slide = {
         content = {},
@@ -80,8 +83,6 @@ parser.parse = function(bufnr)
       capture_text = vim.treesitter.get_node_text(node:parent(), bufnr)
     end
 
-    table.insert(current_slide.content, capture_text)
-
     table.insert(current_slide.captures, {
       id = id,
       node = node,
@@ -93,6 +94,7 @@ parser.parse = function(bufnr)
       col_end = col_end,
     })
   end
+  current_slide.content = vim.api.nvim_buf_get_lines(bufnr, current_row_header, -1, false)
   table.insert(parsed_content, current_slide)
 
   return parsed_content

@@ -20,12 +20,12 @@ end
 controls.set_slide_controls = function(presentation, render_slide, options)
   present_keymap("n", "n", function()
     presentation.current_slide = math.min(presentation.current_slide + 1, #presentation.content)
-    render_slide(presentation.current_slide)
+    render_slide(presentation)
   end, presentation.windows.body.buf)
 
   present_keymap("n", "p", function()
     presentation.current_slide = math.max(presentation.current_slide - 1, 1)
-    render_slide(presentation.current_slide)
+    render_slide(presentation)
   end, presentation.windows.body.buf)
 
   present_keymap("n", "q", function()

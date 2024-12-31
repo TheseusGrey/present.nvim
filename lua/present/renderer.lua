@@ -40,9 +40,19 @@ local set_slide_content = function(presentation)
   vim.api.nvim_set_hl(0, "FloatFooter", { fg = "orange" })
 end
 
----@param presentation any
+---@param presentation present.Presentation
 renderer.render_slide = function(presentation)
-  set_slide_content(presentation)
+  local slide = presentation.content[presentation.current_slide]
+
+  local footer = string.format("%d / %d | %s", presentation.current_slide, #presentation.content, presentation.title)
+
+  presentation.window_confs.background.footer = footer
+  presentation.window_confs.content.title = slide.content[1] -- TODO: Better title formatting
+
+  -- Set slide content
+  vim.api.nvim_buf_set_lines(presentation.windows.body.buf, 0, -1, false, slide.content)
+  vim.api.nvim_win_set_config(presentation.windows.background.win, presentation.window_confs.background)
+  vim.api.nvim_win_set_config(presentation.windows.body.win, presentation.window_confs.content)
 end
 
 renderer.render_title = function() end
