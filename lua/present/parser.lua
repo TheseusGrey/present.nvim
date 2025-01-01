@@ -42,6 +42,27 @@ local queries = vim.treesitter.query.parse(
 	]]
 )
 
+local inline_queries = vim.treesitter.query.parse(
+  "markdown_inline",
+  [[
+		((shortcut_link) @callout)
+
+		([
+			(inline_link)
+			(full_reference_link)
+		] @hyperlink)
+			
+		((email_autolink) @email)
+		((image) @image)
+
+		((code_span) @code)
+
+		((entity_reference) @entity)
+
+		((backslash_escape) @escaped)
+	]]
+)
+
 ---@param bufnr integer
 ---@return present.Slide[]|nil
 parser.parse = function(bufnr)
@@ -88,6 +109,8 @@ parser.parse = function(bufnr)
     end
 
     if capture_name == "code" then
+      ---@diagnostic disable-next-line: param-type-mismatch
+      local language = vim.treesitter.get_node_text(node:child(1), bufnr)
       local code = vim.api.nvim_buf_get_lines(bufnr, row_start + 1, row_end - 1, false)
       ---@type present.CodeBlock
       table.insert(current_slide.code_blocks, {
@@ -95,8 +118,6 @@ parser.parse = function(bufnr)
         code = code,
         row_start = row_start - last_slide_row_end,
         row_end = row_end - last_slide_row_end,
-        col_start = col_start,
-        col_end = col_end,
       })
     end
 

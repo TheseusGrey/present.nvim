@@ -47,7 +47,7 @@ controls.set_slide_controls = function(presentation, render_slide, options)
       return
     end
 
-    local next_block = math.min(last_run_block, #code_blocks)
+    local next_block = math.fmod(math.max(last_run_block + 1, 1), #code_blocks + 1)
     local block = code_blocks[next_block]
     local executor = options.executors[block.language]
     if not executor then
@@ -57,7 +57,7 @@ controls.set_slide_controls = function(presentation, render_slide, options)
 
     -- Table to capture print messages
     local output = { "# Code", "", "```" .. block.language }
-    vim.list_extend(output, vim.split(block.code, "\n"))
+    vim.list_extend(output, block.code)
     table.insert(output, "```")
 
     table.insert(output, "")
@@ -83,7 +83,6 @@ controls.set_slide_controls = function(presentation, render_slide, options)
 
     vim.bo[buf].filetype = "markdown"
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, output)
-    last_run_block = math.fmod(last_run_block, #code_blocks)
   end, presentation.windows.body.buf)
 
   local restore = {

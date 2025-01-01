@@ -12,11 +12,9 @@
 
 ---@class present.CodeBlock
 ---@field language string: Language used by the code block
----@field code string: code contained inside the block
+---@field code string[]: code contained inside the block
 ---@field row_start integer
 ---@field row_end integer
----@field col_start integer
----@field col_end integer
 
 ---@class present.SlideCapture
 ---@field id integer: id of the capture

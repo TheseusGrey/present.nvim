@@ -32,7 +32,7 @@ executors.lua = function(block)
   end
 
   -- Call the provided function
-  local chunk = loadstring(block.code)
+  local chunk = loadstring(table.concat(block.code, "\n"))
   pcall(function()
     if not chunk then
       table.insert(output, " <<<BROKEN CODE>>>")

@@ -16,6 +16,9 @@ A Neovim plugin for rendering awesome presentations using Markdown!.
 ```lua
 {
   'tjdevries/present.nvim',
+  dependencies = {
+    "nvim-treesitter/nvim-treesitter",
+  },
 }
 ```
 
