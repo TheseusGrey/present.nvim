@@ -26,6 +26,7 @@ renderer.render_slide = function(presentation)
   vim.api.nvim_buf_set_lines(presentation.windows.body.buf, 0, -1, false, slide.content)
   vim.api.nvim_win_set_config(presentation.windows.background.win, presentation.window_confs.background)
   vim.api.nvim_win_set_config(presentation.windows.body.win, presentation.window_confs.content)
+  vim.api.nvim_win_set_cursor(0, { vim.api.nvim_buf_line_count(presentation.windows.body.buf), 0 })
 
   -- Set highlights
   vim.api.nvim_win_set_hl_ns(presentation.windows.background.win, renderer.namespace)
@@ -35,7 +36,9 @@ renderer.render_slide = function(presentation)
   -- Set extmarks
   for _, content in ipairs(slide.captures) do
     if content.name == "heading" then
-      renderer.render_title(presentation.windows.body.buf, content)
+      renderer.render_heading(presentation.windows.body.buf, content)
+    elseif content.name == "subheading" then
+      renderer.render_subheading(presentation.windows.body.buf, content)
     end
   end
 end
@@ -50,21 +53,26 @@ end
 
 ---@param buf number: slide content buffer number
 ---@param content present.SlideCapture: capture info on the title
-renderer.render_title = function(buf, content)
-  vim.api.nvim_set_hl(renderer.namespace, "PresentHeader", {})
+renderer.render_heading = function(buf, content)
+  -- col_end is relative to the marker (e.g. "## ..."), not the whole header
+  local level = content.col_end
+  local md_title = vim.fn.hlexists("markdownH" .. level) and renderer.get_hl("markdownH" .. level)
+  vim.api.nvim_set_hl(renderer.namespace, "PresentHeading", vim.tbl_extend("force", md_title, { bold = true }))
 
   vim.api.nvim_buf_set_extmark(buf, renderer.namespace, content.row_start, content.col_start, {
     end_col = content.col_end,
     undo_restore = false,
     invalidate = true,
 
-    hl_group = "PresentHeader",
+    hl_group = "PresentHeading",
 
     hl_mode = "replace",
+
     virt_text = {
-      { " " .. content.text:gsub("^#* ", "") .. string.rep(" ", content.text:len()), "PresentHeader" },
+      { " " .. content.text:gsub("^#* ", "") .. string.rep(" ", content.text:len()), "PresentHeading" },
     },
     virt_text_pos = "overlay",
+    conceal = "",
   })
 
   vim.api.nvim_buf_set_extmark(buf, renderer.namespace, content.row_start + 1, content.col_start, {
@@ -72,13 +80,38 @@ renderer.render_title = function(buf, content)
     undo_restore = false,
     invalidate = true,
 
-    hl_group = "PresentHeader",
+    hl_group = "PresentHeading",
 
     hl_mode = "combine",
     virt_text = {
-      { string.rep("🮂", content.text:len() + 1) },
+      { string.rep("▔", content.text:len() + 1), "PresentHeading" },
     },
     virt_text_pos = "inline",
+    conceal = "",
+  })
+end
+
+---@param buf number: slide content buffer number
+---@param content present.SlideCapture: capture info on the title
+renderer.render_subheading = function(buf, content)
+  -- col_end is relative to the marker (e.g. "## ..."), not the whole header
+  local level = content.col_end
+  local md_title = vim.fn.hlexists("markdownH" .. level) and renderer.get_hl("markdownH" .. level)
+  vim.api.nvim_set_hl(renderer.namespace, "PresentSubheading", vim.tbl_extend("force", md_title, { bold = true }))
+
+  vim.api.nvim_buf_set_extmark(buf, renderer.namespace, content.row_start, content.col_start, {
+    end_col = content.col_end,
+    undo_restore = false,
+    invalidate = true,
+
+    hl_group = "PresentSubheading",
+
+    hl_mode = "replace",
+
+    virt_text = {
+      { content.text:gsub("^#* ", "") .. string.rep(" ", content.text:len()), "PresentSubheading" },
+    },
+    virt_text_pos = "overlay",
     conceal = "",
   })
 end
