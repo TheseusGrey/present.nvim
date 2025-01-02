@@ -28,7 +28,7 @@
 ---@field col_end integer
 
 ---@class present.Options
----@field stlyes present.options.styles
+---@field styles present.options.styles
 ---@field executors present.options.executors
 
 ---@class present.options.styles

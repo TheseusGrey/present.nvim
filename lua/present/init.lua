@@ -6,6 +6,7 @@ local styles = require("present.styles")
 local controls = require("present.controls")
 local logger = require("present.logger")
 
+---@type present.Options
 local options = {
   styles = {
     border = 8,
@@ -27,7 +28,7 @@ M.setup = function(opts)
 end
 
 ---@type present.Presentation
-local presentation = {
+M.presentation = {
   parsed = {},
   current_slide = 1,
   slide_buf = {},
@@ -46,17 +47,17 @@ M.start_presentation = function(opts)
     logger.warn("present.nvim: unable to parse buffer, might not be a markdown file?")
     return
   end
-  presentation.content = parsed
-  presentation.current_slide = 1
-  presentation.title = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(opts.bufnr), ":t")
+  M.presentation.content = parsed
+  M.presentation.current_slide = opts.slide or 1
+  M.presentation.title = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(opts.bufnr), ":t")
 
-  presentation.window_confs = styles.create_window_configurations(options.styles)
-  presentation.windows.background = renderer.create_floating_window(presentation.window_confs.background)
-  presentation.windows.body = renderer.create_floating_window(presentation.window_confs.content, true)
-  vim.bo[presentation.windows.body.buf].filetype = "markdown"
+  M.presentation.window_confs = styles.create_window_configurations(options.styles)
+  M.presentation.windows.background = renderer.create_floating_window(M.presentation.window_confs.background)
+  M.presentation.windows.body = renderer.create_floating_window(M.presentation.window_confs.content, true)
+  vim.bo[M.presentation.windows.body.buf].filetype = "markdown"
 
-  controls.set_slide_controls(presentation, renderer.render_slide, options)
-  renderer.render_slide(presentation)
+  controls.set_slide_controls(M.presentation, renderer.render_slide, options)
+  renderer.render_slide(M.presentation)
 end
 
 return M
