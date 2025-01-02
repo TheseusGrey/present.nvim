@@ -20,17 +20,17 @@ end
 ---@param render_slide function
 ---@param options table
 controls.set_slide_controls = function(presentation, render_slide, options)
-  local last_run_block = 0
+  local next_block = 1
 
   present_keymap("n", "n", function()
     presentation.current_slide = math.min(presentation.current_slide + 1, #presentation.content)
-    last_run_block = 0
+    next_block = 1
     render_slide(presentation)
   end, presentation.windows.body.buf)
 
   present_keymap("n", "p", function()
     presentation.current_slide = math.max(presentation.current_slide - 1, 1)
-    last_run_block = 0
+    next_block = 1
     render_slide(presentation)
   end, presentation.windows.body.buf)
 
@@ -47,7 +47,6 @@ controls.set_slide_controls = function(presentation, render_slide, options)
       return
     end
 
-    local next_block = math.fmod(math.max(last_run_block + 1, 1), #code_blocks + 1)
     local block = code_blocks[next_block]
     local executor = options.executors[block.language]
     if not executor then
@@ -70,7 +69,7 @@ controls.set_slide_controls = function(presentation, render_slide, options)
     local buf = vim.api.nvim_create_buf(false, true) -- No file, scratch buffer
     local temp_width = math.floor(vim.o.columns * 0.8)
     local temp_height = math.floor(vim.o.lines * 0.8)
-    vim.api.nvim_open_win(buf, true, {
+    local win = vim.api.nvim_open_win(buf, true, {
       relative = "editor",
       style = "minimal",
       noautocmd = true,
@@ -81,8 +80,13 @@ controls.set_slide_controls = function(presentation, render_slide, options)
       border = "rounded",
     })
 
+    present_keymap("n", "q", function()
+      vim.api.nvim_win_close(win, true)
+    end, buf)
+
     vim.bo[buf].filetype = "markdown"
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, output)
+    next_block = math.fmod(math.max(next_block + 1, 1), #code_blocks + 1)
   end, presentation.windows.body.buf)
 
   local restore = {
