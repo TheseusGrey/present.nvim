@@ -30,6 +30,7 @@ renderer.render_slide = function(presentation)
   -- Set highlights
   vim.api.nvim_win_set_hl_ns(presentation.windows.background.win, renderer.namespace)
   vim.api.nvim_win_set_hl_ns(presentation.windows.body.win, renderer.namespace)
+  renderer.highlight()
 
   -- Set extmarks
   for _, content in ipairs(slide.captures) do
@@ -39,24 +40,51 @@ renderer.render_slide = function(presentation)
   end
 end
 
+---@param name string
+renderer.get_hl = function(name)
+  return vim.api.nvim_get_hl(0, {
+    name = name,
+    create = false,
+  })
+end
+
 ---@param buf number: slide content buffer number
 ---@param content present.SlideCapture: capture info on the title
 renderer.render_title = function(buf, content)
+  vim.api.nvim_set_hl(renderer.namespace, "PresentHeader", {})
+
   vim.api.nvim_buf_set_extmark(buf, renderer.namespace, content.row_start, content.col_start, {
+    end_col = content.col_end,
+    undo_restore = false,
+    invalidate = true,
+
+    hl_group = "PresentHeader",
+
+    hl_mode = "replace",
+    virt_text = {
+      { " " .. content.text:gsub("^#* ", "") .. string.rep(" ", content.text:len()), "PresentHeader" },
+    },
+    virt_text_pos = "overlay",
+  })
+
+  vim.api.nvim_buf_set_extmark(buf, renderer.namespace, content.row_start + 1, content.col_start, {
+    end_row = content.row_end + 1,
     undo_restore = false,
     invalidate = true,
 
     hl_group = "PresentHeader",
 
     hl_mode = "combine",
-    virt_text = { { content.text:gsub("^#* ", ""), "PresentHeader" } },
+    virt_text = {
+      { string.rep("🮂", content.text:len() + 1) },
+    },
     virt_text_pos = "inline",
+    conceal = "",
   })
 end
 
 renderer.highlight = function()
   vim.api.nvim_set_hl(renderer.namespace, "FloatFooter", { fg = "orange" })
-  vim.api.nvim_set_hl(renderer.namespace, "PresentHeader", { fg = "green", bg = "#FF0000" })
 end
 
 return renderer

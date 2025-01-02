@@ -63,6 +63,31 @@ local inline_queries = vim.treesitter.query.parse(
 	]]
 )
 
+---@param root TSNode: root nose to parse content from
+---@param bufnr integer: buffer of parsed tree
+---@param current_slide present.Slide
+---@param slide_number integer
+---@param last_slide_row_end integer
+local parse_inline_captures = function(root, bufnr, current_slide, slide_number, last_slide_row_end)
+  for id, node, _ in inline_queries:iter_captures(root, bufnr, 0, -1) do
+    local capture_name = queries.captures[id]
+    local capture_text = vim.treesitter.get_node_text(node, bufnr)
+    local row_start, col_start, row_end, col_end = node:range()
+
+    table.insert(current_slide.captures, {
+      id = id,
+      slide = slide_number,
+      node = node,
+      name = capture_name,
+      text = capture_text,
+      row_start = row_start - last_slide_row_end,
+      row_end = row_end - last_slide_row_end,
+      col_start = col_start,
+      col_end = col_end,
+    })
+  end
+end
+
 ---@param bufnr integer
 ---@return present.Slide[]|nil
 parser.parse = function(bufnr)
@@ -74,6 +99,12 @@ parser.parse = function(bufnr)
   ---@type present.Slide[]
   local parsed_content = {}
 
+  local tree_parser = vim.treesitter.get_parser(bufnr)
+  local root = tree_parser:parse()[1]:root()
+
+  local current_row_header = 0
+  local last_slide_row_end = 0
+
   ---@type present.Slide
   local current_slide = {
     content = {},
@@ -81,10 +112,6 @@ parser.parse = function(bufnr)
     code_blocks = {},
   }
 
-  local current_row_header = 0
-  local last_slide_row_end = 0
-  local tree_parser = vim.treesitter.get_parser(bufnr)
-  local root = tree_parser:parse()[1]:root()
   for id, node, _ in queries:iter_captures(root, bufnr, 0, -1) do
     local capture_name = queries.captures[id]
     local capture_text = vim.treesitter.get_node_text(node, bufnr)
@@ -94,6 +121,7 @@ parser.parse = function(bufnr)
       current_slide.content = vim.api.nvim_buf_get_lines(bufnr, current_row_header, row_start, false)
       current_row_header = row_start
       last_slide_row_end = row_end
+      parse_inline_captures(root, bufnr, current_slide, #parsed_content, last_slide_row_end)
       table.insert(parsed_content, current_slide)
       current_slide = {
         content = {},
