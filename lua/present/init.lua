@@ -29,6 +29,7 @@ end
 
 ---@type present.Presentation
 M.presentation = {
+  captures = {},
   parsed = {},
   current_slide = 1,
   slide_buf = {},

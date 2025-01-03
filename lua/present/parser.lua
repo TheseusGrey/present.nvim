@@ -55,7 +55,7 @@ local inline_queries = vim.treesitter.query.parse(
 		((email_autolink) @email)
 		((image) @image)
 
-		((code_span) @code)
+		((code_span) @inline_code)
 
 		((entity_reference) @entity)
 
@@ -63,47 +63,64 @@ local inline_queries = vim.treesitter.query.parse(
 	]]
 )
 
----@param root TSNode: root nose to parse content from
+---@param tree TSTree: tree or sub-tree to parse
 ---@param bufnr integer: buffer of parsed tree
----@param current_slide present.Slide
----@param slide_number integer
----@param last_slide_row_end integer
-local parse_inline_captures = function(root, bufnr, current_slide, slide_number, last_slide_row_end)
-  for id, node, _ in inline_queries:iter_captures(root, bufnr, 0, -1) do
+---@param parsed_content present.Slide[]
+---@param from integer: 0-indexed row number the tree or subtree starts at in the document
+---@param to integer: 0-indexed row number the tree or subtree ends at in the document
+parser.md_inline = function(tree, bufnr, parsed_content, from, to)
+  if not parser_installed("markdown_inline") then
+    logger.error("present.nvim: No inline markdown parser found, cannot create slides!")
+    return
+  end
+
+  local get_slide = function(row_start)
+    local rows = 0
+    local slide_row_start = 0
+    local slide_row_end = 0
+    for index, slide in pairs(parsed_content) do
+      rows = rows + #slide.content
+      slide_row_start = slide_row_end
+      slide_row_end = rows
+
+      if row_start < rows then
+        return index, slide_row_start, slide_row_end - 1
+      end
+    end
+    return #parsed_content, slide_row_start, slide_row_end - 1
+  end
+
+  local root = tree:root()
+  for id, node, _ in inline_queries:iter_captures(root, bufnr, from, to) do
     local capture_name = queries.captures[id]
     local capture_text = vim.treesitter.get_node_text(node, bufnr)
     local row_start, col_start, row_end, col_end = node:range()
 
-    table.insert(current_slide.captures, {
+    local slide, slide_start, _ = get_slide(row_start)
+    row_start = 0
+
+    table.insert(parsed_content[slide].captures, {
       id = id,
-      slide = slide_number,
       node = node,
       name = capture_name,
       text = capture_text,
-      row_start = row_start - last_slide_row_end,
-      row_end = row_end - last_slide_row_end,
+      row_start = row_end - slide_start,
+      row_end = row_end - slide_start,
       col_start = col_start,
       col_end = col_end,
     })
   end
 end
 
+---@param tree TSTree
 ---@param bufnr integer
----@return present.Slide[]|nil
-parser.parse = function(bufnr)
+---@param from integer: 0-indexed row number the tree or subtree starts at in the document
+---@param to integer: 0-indexed row number the tree or subtree ends at in the document
+parser.md = function(tree, bufnr, parsed_content, from, to)
   if not parser_installed("markdown") then
     logger.error("present.nvim: No Markdown parser found, cannot create slides!")
     return
   end
-
-  ---@type present.Slide[]
-  local parsed_content = {}
-
-  local tree_parser = vim.treesitter.get_parser(bufnr)
-  local root = tree_parser:parse()[1]:root()
-
-  local current_row_header = 0
-  local last_slide_row_end = 0
 
   ---@type present.Slide
   local current_slide = {
@@ -112,16 +129,18 @@ parser.parse = function(bufnr)
     code_blocks = {},
   }
 
-  for id, node, _ in queries:iter_captures(root, bufnr, 0, -1) do
+  local root = tree:root()
+  local row_heading = 0
+  local last_slide_row_end = 0
+  for id, node, _ in queries:iter_captures(root, bufnr, from, to) do
     local capture_name = queries.captures[id]
     local capture_text = vim.treesitter.get_node_text(node, bufnr)
     local row_start, col_start, row_end, col_end = node:range()
 
     if capture_name == "heading" and row_start ~= 0 then
-      current_slide.content = vim.api.nvim_buf_get_lines(bufnr, current_row_header, row_start, false)
-      current_row_header = row_start
+      current_slide.content = vim.api.nvim_buf_get_lines(bufnr, row_heading, row_start, false)
+      row_heading = row_start
       last_slide_row_end = row_end
-      parse_inline_captures(root, bufnr, current_slide, #parsed_content, last_slide_row_end)
       table.insert(parsed_content, current_slide)
       current_slide = {
         content = {},
@@ -161,8 +180,29 @@ parser.parse = function(bufnr)
       col_end = col_end,
     })
   end
-  current_slide.content = vim.api.nvim_buf_get_lines(bufnr, current_row_header, -1, false)
+  current_slide.content = vim.api.nvim_buf_get_lines(bufnr, row_heading, -1, false)
   table.insert(parsed_content, current_slide)
+end
+
+---@param buf number
+parser.parse = function(buf)
+  ---@type present.Slide[]
+  local parsed_content = {}
+
+  local buf_parser = vim.treesitter.get_parser(buf)
+  buf_parser:parse(true)
+
+  buf_parser:for_each_tree(function(ts_tree, language_tree)
+    local language = language_tree:lang()
+    local row_start, _, row_end, _ = ts_tree:root():range()
+
+    -- challange is working out what slide we're on T_T
+    if language == "markdown" then
+      parser.md(ts_tree, buf, parsed_content, row_start, row_end)
+    elseif language == "markdown_inline" then
+      parser.md_inline(ts_tree, buf, parsed_content, row_start, row_end)
+    end
+  end)
 
   return parsed_content
 end
