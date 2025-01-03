@@ -86,7 +86,7 @@ controls.set_slide_controls = function(presentation, render_slide, options)
 
     vim.bo[buf].filetype = "markdown"
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, output)
-    next_block = math.fmod(math.max(next_block + 1, 1), #code_blocks + 1)
+    next_block = math.max(math.fmod(next_block + 1, #code_blocks + 1), 1)
   end, presentation.windows.body.buf)
 
   local restore = {
