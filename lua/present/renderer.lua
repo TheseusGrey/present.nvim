@@ -39,6 +39,7 @@ renderer.render_slide = function(presentation)
       renderer.render_heading(presentation.windows.body.buf, content)
     elseif content.name == "subheading" then
       renderer.render_subheading(presentation.windows.body.buf, content)
+    elseif content.name == "horizontal_rule" then
     end
   end
 end
@@ -56,8 +57,7 @@ end
 renderer.render_heading = function(buf, content)
   -- col_end is relative to the marker (e.g. "## ..."), not the whole header
   local level = content.col_end
-  local md_title = vim.fn.hlexists("markdownH" .. level) and renderer.get_hl("markdownH" .. level)
-  vim.api.nvim_set_hl(renderer.namespace, "PresentHeading", vim.tbl_extend("force", md_title, { bold = true }))
+  vim.api.nvim_set_hl(renderer.namespace, "PresentHeading", { link = "markdownH" .. level, bold = true })
 
   vim.api.nvim_buf_set_extmark(buf, renderer.namespace, content.row_start, content.col_start, {
     end_col = content.col_end,
@@ -96,8 +96,7 @@ end
 renderer.render_subheading = function(buf, content)
   -- col_end is relative to the marker (e.g. "## ..."), not the whole header
   local level = content.col_end
-  local md_title = vim.fn.hlexists("markdownH" .. level) and renderer.get_hl("markdownH" .. level)
-  vim.api.nvim_set_hl(renderer.namespace, "PresentSubheading", vim.tbl_extend("force", md_title, { bold = true }))
+  vim.api.nvim_set_hl(renderer.namespace, "PresentSubheading", { link = "markdownH" .. level, bold = true })
 
   vim.api.nvim_buf_set_extmark(buf, renderer.namespace, content.row_start, content.col_start, {
     end_col = content.col_end,
