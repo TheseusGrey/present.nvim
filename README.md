@@ -8,7 +8,7 @@ A Neovim plugin for rendering awesome presentations using Markdown!.
 - [Feature](#Features)
 - [Usage](#usage)
 - [wiki](https://github.com/TheseusGrey/present.nvim/wiki) for integration examples and (eventually) more
-- [Credits](#credits)
+- [Credits & Examples](#credits)
 ---
 
 ## Installation
@@ -128,3 +128,6 @@ For any slides containing code blocks, you can cycle through executing the block
 ## Credits
 
 - Original plugin author: [teej_dv](https://github.com/tjdevries)
+
+![README table of contents as a rendered slide](doc/showcase1.png)
+![README code examples rendered as a slide](doc/showcase2.png)
