@@ -62,8 +62,8 @@ options = {
     -- see #Features for full list of languages supported by default
   },
   integrations = {
-    -- Let markview control styling slide content
     markview = false,
+    render_markdown = false,
   },
   keys = {
     slide_next = "n",

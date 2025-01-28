@@ -40,6 +40,12 @@ renderer.render_slide = function(presentation, opts)
 
     vim.cmd.Markview("attach")
     vim.cmd.Markview("enable")
+  elseif opts.integrations.render_markdown then
+    if not vim.cmd.RenderMarkdown then
+      logger.error("present.nvim: render-markdown cmd not found, is the plugin installed and enabled?")
+    end
+
+    vim.cmd.RenderMarkdown("enable")
   else
     -- Set highlights
     vim.api.nvim_win_set_hl_ns(presentation.windows.background.win, renderer.namespace)
