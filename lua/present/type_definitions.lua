@@ -40,6 +40,7 @@
 
 ---@class present.Integrations
 ---@field markview boolean?
+---@field render_markdown boolean?
 
 ---@class present.Keymaps
 ---@field slide_next string?

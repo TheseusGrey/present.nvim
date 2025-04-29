@@ -105,6 +105,10 @@ controls.set_slide_controls = function(presentation, options)
     conceallevel = { original = vim.o.conceallevel, present = 3 },
     concealcursor = { original = vim.o.concealcursor, present = "nc" },
     cmdheight = { original = vim.o.cmdheight, present = 0 },
+    guicursor = { original = vim.o.guicursor, present = "n:NormalFloat" },
+    wrap = { original = vim.o.wrap, present = true },
+    breakindent = { original = vim.o.breakindent, present = true },
+    breakindentopt = { original = vim.o.breakindentopt, present = "list:-1" },
   }
 
   -- Set the options we want during presentation

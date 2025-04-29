@@ -21,6 +21,7 @@ M.options = {
   },
   integrations = {
     markview = false,
+    render_markdown = false,
   },
   keys = {
     slide_next = "n",
