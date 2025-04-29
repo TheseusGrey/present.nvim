@@ -36,6 +36,13 @@ controls.set_slide_controls = function(presentation, options)
   end, presentation.windows.body.buf)
 
   present_keymap("n", options.keys.presentation_quit, function()
+    if options.integrations.markview then
+      local markview_availible, markview = pcall(require, "markview")
+      if markview_availible then
+        markview.clear(presentation.windows.body.buf)
+      end
+    end
+
     vim.api.nvim_win_close(presentation.windows.body.win, true)
   end, presentation.windows.body.buf)
 
@@ -95,10 +102,9 @@ controls.set_slide_controls = function(presentation, options)
   end, presentation.windows.body.buf)
 
   local restore = {
-    cmdheight = {
-      original = vim.o.cmdheight,
-      present = 0,
-    },
+    conceallevel = { original = vim.o.conceallevel, present = 3 },
+    concealcursor = { original = vim.o.concealcursor, present = "nc" },
+    cmdheight = { original = vim.o.cmdheight, present = 0 },
   }
 
   -- Set the options we want during presentation

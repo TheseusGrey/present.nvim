@@ -32,14 +32,13 @@ renderer.render_slide = function(presentation, opts)
     presentation.windows.body.win,
     vim.tbl_deep_extend("force", presentation.window_confs.content, opts.styles.slide_window)
   )
-
   if opts.integrations.markview then
-    if not vim.cmd.Markview then
+    local markview_availible, markview = pcall(require, "markview")
+    if not markview_availible then
       logger.error("present.nvim: Markview cmd not found, is the plugin installed and enabled?")
+    else
+      markview.render(presentation.windows.body.buf, { enable = true, hybrid_mode = false })
     end
-
-    vim.cmd.Markview("attach")
-    vim.cmd.Markview("enable")
   else
     -- Set highlights
     vim.api.nvim_win_set_hl_ns(presentation.windows.background.win, renderer.namespace)
